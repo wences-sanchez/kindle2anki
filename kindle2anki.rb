@@ -3,16 +3,9 @@ require('json')
 require('net/http')
 require('digest/sha1')
 
-rwsessionid, _, t = Open3.capture3(
-  'security',
-  'find-generic-password',
-  '-w', # print only the password
-  '-l', 'readwise-rwsessionid',
-)
-abort('missing rwsessionid') unless t.success?
 
-def highlights_from_api(rwsessionid)
-  cookie = "rwsessionid=#{rwsessionid.chomp}"
+def get_highlights_from_api(readwise_session_id)
+  cookie = "readwise_session_id=#{readwise_session_id.chomp}"
   Net::HTTP.start('readwise.io', 443, use_ssl: true) do |http|
     resp = http.get('/munger', 'Cookie' => cookie)
     abort('GET failed') unless resp.code.to_i == 200
@@ -73,7 +66,15 @@ def readwise_to_tsv(data)
   out
 end
 
-data = highlights_from_api(rwsessionid)
+readwise_session_id, _, t = Open3.capture3(
+  'security',
+  'find-generic-password',
+  '-w', # print only the password
+  '-l', 'readwise-rwsessionid',
+)
+abort('missing readwise_session_id') unless t.success?
+
+data = get_highlights_from_api(readwise_session_id)
 # pdf_data = JSON.parse(File.read('pdf-extract/pdf-highlights.json'))
 
 # puts pdf_data_to_tsv(pdf_data)
